@@ -1,7 +1,8 @@
 /**
  * Support for generating SHA-1 of a stream.
+ * Jason Davies <jason@jasondavies.com>
  *
- * Based on http://pajhome.org.uk/crypt/md5/sha1.js.
+ * Based on and requires: http://pajhome.org.uk/crypt/md5/3.0/sha1-2.2alpha.js
  */
 
 function naked_sha1_head() {
@@ -43,12 +44,12 @@ function naked_sha1(x, len, h) {
     for(var j = 0; j < 80; j++)
     {
       if(j < 16) w[j] = x[i + j];
-      else w[j] = rol(w[j-3] ^ w[j-8] ^ w[j-14] ^ w[j-16], 1);
-      var t = safe_add(safe_add(rol(a, 5), sha1_ft(j, b, c, d)),
+      else w[j] = bit_rol(w[j-3] ^ w[j-8] ^ w[j-14] ^ w[j-16], 1);
+      var t = safe_add(safe_add(bit_rol(a, 5), sha1_ft(j, b, c, d)),
                        safe_add(safe_add(e, w[j]), sha1_kt(j)));
       e = d;
       d = c;
-      c = rol(b, 30);
+      c = bit_rol(b, 30);
       b = a;
       a = t;
     }
@@ -84,8 +85,12 @@ function naked_sha1_tail(h) {
 }
 
 function hmac_sha1_stream_head(key, data) {
-  var bkey = str2binb(key);
-  if(bkey.length > 16) bkey = core_sha1(bkey, key.length * chrsz);
+  return rstr_hmac_sha1_stream_head(str2rstr_utf8(key), str2rstr_utf8(data));
+}
+
+function rstr_hmac_sha1_stream_head(key, data) {
+  var bkey = rstr2binb(key);
+  if(bkey.length > 16) bkey = binb_sha1(bkey, key.length * 8);
 
   var ipad = Array(16), opad = Array(16);
   for(var i = 0; i < 16; i++)
@@ -95,7 +100,7 @@ function hmac_sha1_stream_head(key, data) {
   }
 
   var naked_hash = naked_sha1_head();
-  naked_sha1(ipad.concat(str2binb(data)), 512 + data.length * chrsz, naked_hash);
+  naked_sha1(ipad.concat(rstr2binb(data)), 512 + data.length * 8, naked_hash);
 
   return {
     opad: opad,
@@ -104,10 +109,14 @@ function hmac_sha1_stream_head(key, data) {
 }
 
 function hmac_sha1_stream(data, naked_hash) {
-  naked_sha1(str2binb(data), data.length * chrsz, naked_hash);
+  return rstr_hmac_sha1_stream(str2rstr_utf8(data), naked_hash);
+}
+
+function rstr_hmac_sha1_stream(data, naked_hash) {
+  naked_sha1(rstr2binb(data), data.length * 8, naked_hash);
 }
 
 function hmac_sha1_stream_tail(opad, naked_hash) {
   var hash = naked_sha1_tail(naked_hash);
-  return binb2b64(core_sha1(opad.concat(hash), 512 + 160));
+  return rstr2b64(binb2rstr(binb_sha1(opad.concat(hash), 512 + 160)));
 }
