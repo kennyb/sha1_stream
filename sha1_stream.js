@@ -2,7 +2,7 @@
  * Support for generating SHA-1 of a stream.
  * Jason Davies <jason@jasondavies.com>
  *
- * Based on and requires: http://pajhome.org.uk/crypt/md5/3.0/sha1-2.2alpha.js
+ * Based on and requires: http://pajhome.org.uk/crypt/md5/sha1.html
  */
 
 function naked_sha1_head() {
